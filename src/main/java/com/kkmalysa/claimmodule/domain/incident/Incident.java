@@ -10,13 +10,11 @@ import java.util.Optional;
  * @TODO sealed details + composition instead of a bunch of fields with a lot of nulls
  */
 public class Incident {
-    @Getter
+
     private final IncidentType incidentType;
 
     //obligatory
-    @Getter
     private final Instant occurredAt;
-    @Getter
     private final String location;
 
     //optional
@@ -51,6 +49,11 @@ public class Incident {
         this.injuredPerson = injuredPerson;
         this.medicalReportNumber = medicalReportNumber;
     }
+
+    public IncidentType getIncidentType() { return incidentType; }
+    public Instant getOccurredAt() { return occurredAt; }
+    public String getLocation() { return location; }
+
 
     public Optional <String> getDescription() {
         return Optional.ofNullable(description);

@@ -5,6 +5,7 @@ import java.util.Objects;
 
 /**
  * This is our First Design Pattern - Builder in this project.
+ * Variant Builder = resolve problem of different data variants depends on type of incident.
  * Step Builder = a Builder variant that enforces the build order and required data at compile time.
  * The build process is split into steps (interfaces), and available methods depend on the current step
  * and chosen IncidentType. This prevents invalid object states and "setter chaos" by construction.
