@@ -5,6 +5,7 @@ commit 2: Implement StepBuilder on incident creation process
            Step Builder = a Builder variant that enforces the build order and required data at compile time.
            The build process is split into steps (interfaces), and available methods depend on the current step
            and chosen IncidentType. This prevents invalid object states and "setter chaos" by construction.
+           
 commit 3: Implement SequenceBuilder on claim creation process
            Builder #2 - ClaimBuilder (FNOL = First Notice of Loss).
            fnol() -> PolicyStep -> IncidentStep -> ReporterStep -> ChannelStep -> OptionalStep -> build()
