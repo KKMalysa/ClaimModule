@@ -2,6 +2,8 @@ package com.kkmalysa.claimmodule.application.submission;
 
 import com.kkmalysa.claimmodule.domain.claim.Claim;
 import com.kkmalysa.claimmodule.domain.claim.ClaimStatus;
+import com.kkmalysa.claimmodule.domain.events.DomainEvent;
+import com.kkmalysa.claimmodule.domain.events.DomainEventBuilder;
 import com.kkmalysa.claimmodule.ports.out.AttachmentProvider;
 import com.kkmalysa.claimmodule.ports.out.ClaimRepository;
 import com.kkmalysa.claimmodule.ports.out.PolicyProvider;
@@ -29,8 +31,7 @@ public final class SubmitClaimUseCase {
         this.submissionGateway = Objects.requireNonNull(submissionGateway);
     }
 
-
-    public ClaimSubmission submit(String claimId, SubmissionChannel channel, String actor, boolean termsAccepted) {
+    public SubmissionResult submit(String claimId, SubmissionChannel channel, String actor, boolean termsAccepted) {
         Claim claim = claimRepository.getById(claimId)
                 .orElseThrow(() -> new IllegalArgumentException("Claim not found: " + claimId));
 
@@ -39,6 +40,7 @@ public final class SubmitClaimUseCase {
 
         List<String> attachments = attachmentProvider.findAttachmentIdsForClaim(claimId);
 
+        // ======= (variant switch: MANUAL vs AUTO) =======
         ClaimSubmissionBuilder.ChannelSelectStep base = ClaimSubmissionBuilder.create()
                 .fromClaim(claim)
                 .policyNumber(policyNumber)
@@ -50,15 +52,23 @@ public final class SubmitClaimUseCase {
                     .termsAccepted(termsAccepted)
                     .build();
             case MANUAL -> base.manual()
-                    // as an option: .termsAcceptedOptional(termsAccepted)
                     .build();
         };
+        // ================================================================
 
         submissionGateway.send(submission);
 
-        Claim updated = claim.withStatus(channel == SubmissionChannel.AUTO ? ClaimStatus.SUBMITTED : ClaimStatus.DRAFT);
-        claimRepository.save(updated);
+        ClaimStatus newStatus = (channel == SubmissionChannel.AUTO) ? ClaimStatus.SUBMITTED : ClaimStatus.DRAFT;
+        Claim updatedClaim = claim.withStatus(newStatus);
+        claimRepository.save(updatedClaim);
 
-        return submission;
+        DomainEvent event = DomainEventBuilder
+                .claimSubmitted()
+                .claim(updatedClaim)
+                .submission(submission)
+                .actor(actor)
+                .build();
+
+        return new SubmissionResult(submission, updatedClaim, event);
     }
 }
